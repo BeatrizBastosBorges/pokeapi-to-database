@@ -1,8 +1,11 @@
 import time
+from initialize_database import initialize_database
 from pokeapi_client import fetch_pokemon_data, get_pokemon_from_db
 from save_pokemon import save_pokemon_to_db, update_pokemon_in_db
 
 def main():
+    initialize_database()
+
     pokemon_id = 1
     while True:
         print(f"Buscando Pokémon ID {pokemon_id}...")
