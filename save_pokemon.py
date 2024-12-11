@@ -23,3 +23,19 @@ def save_pokemon_to_db(pokemon):
     finally:
         cursor.close()
         connection.close()
+
+def update_pokemon_in_db(pokemon):
+    """Atualiza os dados de um Pokémon no banco de dados."""
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    try:
+        cursor.execute("""UPDATE pokemons 
+                           SET name = %s, height = %s, weight = %s 
+                           WHERE id = %s""", 
+                           (pokemon['name'], pokemon['height'], pokemon['weight'], pokemon['id']))
+        connection.commit()
+        print(f"Pokémon {pokemon['name']} atualizado no banco de dados.")
+    finally:
+        cursor.close()
+        connection.close()      

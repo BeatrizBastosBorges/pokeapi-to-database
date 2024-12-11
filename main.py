@@ -1,42 +1,43 @@
 import time
-from pokeapi_client import fetch_pokemon_data
-from save_pokemon import save_pokemon_to_db
-from db_config import get_connection
-
-def pokemon_exists(pokemon_id):
-    """Verifica se o Pokémon já existe no banco de dados."""
-    connection = get_connection()
-    cursor = connection.cursor()
-
-    try:
-        cursor.execute("SELECT COUNT(*) FROM pokemons WHERE id = %s", (pokemon_id,))
-        return cursor.fetchone()[0] > 0
-    finally:
-        cursor.close()
-        connection.close()
+from pokeapi_client import fetch_pokemon_data, get_pokemon_from_db
+from save_pokemon import save_pokemon_to_db, update_pokemon_in_db
 
 def main():
+    pokemon_id = 1
     while True:
-        for pokemon_id in range(1, 152):
-            print(f"Buscando Pokémon ID {pokemon_id}...")
+        print(f"Buscando Pokémon ID {pokemon_id}...")
 
-            if pokemon_exists(pokemon_id):
-                print(f"Pokémon ID {pokemon_id} já existe no banco de dados.")
-                continue
-
+        data = None
+        while not data:
             data = fetch_pokemon_data(pokemon_id)
-            if data:
-                pokemon = {
-                    'id': data['id'],
-                    'name': data['name'],
-                    'height': data['height'],
-                    'weight': data['weight']
-                }
-                save_pokemon_to_db(pokemon)
-                print(f"Pokémon {pokemon['name']} salvo com sucesso!")
+            if not data:
+                print(f"Erro ao buscar Pokémon ID {pokemon_id}")
+                print(f"Aguardando 5 segundos antes de tentar novamente...")
+                time.sleep(5)
 
-        print("Aguardando 30 segundos para a próxima execução...")
-        time.sleep(30)
+        pokemon = {
+            'id': data['id'],
+            'name': data['name'],
+            'height': data['height'],
+            'weight': data['weight']
+        }
+
+        existing_pokemon = get_pokemon_from_db(pokemon_id)
+        if existing_pokemon:
+            if (pokemon['name'] != existing_pokemon['name'] or
+                pokemon['height'] != existing_pokemon['height'] or
+                pokemon['weight'] != existing_pokemon['weight']):
+                update_pokemon_in_db(pokemon)
+            else:
+                print(f"Pokémon ID {pokemon_id} já está atualizado.")
+        else:
+            save_pokemon_to_db(pokemon)
+            print(f"Pokémon {pokemon['name']} salvo com sucesso!")
+
+        pokemon_id += 1
+
+        print("Aguardando 5 segundos antes da próxima execução...")
+        time.sleep(5)
 
 if __name__ == "__main__":
     main()
